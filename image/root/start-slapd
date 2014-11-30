@@ -1,0 +1,52 @@
+#!/bin/bash
+
+function shut_down() {
+    echo "Shutting down"
+    kill -TERM $child 2>/dev/null
+}
+
+trap "shut_down" SIGKILL SIGTERM SIGHUP SIGINT EXIT
+
+printf "Starting slapd ... ";
+
+if [ -z $LDAP_DOMAIN ] ; then
+    printf "\n\nLDAP_DOMAIN is not defined!\n"
+    exit 1
+fi
+
+if [ -z $LDAP_ROOTPW ] ; then
+    printf "\n\nLDAP_ROOTPW is not defined!\n"
+    exit 1
+fi
+
+IFS='.' read -a domain_elems <<< "$LDAP_DOMAIN"
+
+suffix=""
+for elem in "${domain_elems[@]}" ; do
+    if [ "x$suffix" = x ] ; then 
+	suffix="dc=$elem"
+    else
+	suffix="$suffix,dc=$elem"
+    fi
+done
+
+printf "root DN is cn=admin,$suffix\n\n"
+
+cat <<EOF > /etc/openldap/slapd.conf
+
+include         /etc/openldap/schema/core.schema
+pidfile         /var/run/slapd.pid
+argsfile        /var/run/slapd.args
+database        ldif
+directory       /var/openldap-data
+
+suffix          "$suffix"
+rootdn          "cn=admin,$suffix"
+rootpw          secret
+
+EOF
+
+exec slapd -d 1 &
+
+child=$!
+wait $child

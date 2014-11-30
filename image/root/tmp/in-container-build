@@ -1,0 +1,10 @@
+#!/bin/sh
+
+mkdir /var/run/
+
+opkg update
+opkg install openldap-server
+
+# remove unnecessary files after install
+rm /tmp/opkg-lists/*
+
