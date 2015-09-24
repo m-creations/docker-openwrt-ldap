@@ -1,0 +1,5 @@
+include: file:///etc/openldap/schema/fusiondirectory/samba.schema
+include: file:///etc/openldap/schema/fusiondirectory/core-fd.schema
+include: file:///etc/openldap/schema/fusiondirectory/core-fd-conf.schema
+include: file:///etc/openldap/schema/fusiondirectory/recovery-fd.schema
+include: file:///etc/openldap/schema/fusiondirectory/ldapns.schema

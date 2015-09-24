@@ -1,0 +1,114 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcAttributeOptions: lang-
+olcConfigFile: /etc/openldap/slapd.conf.bak
+olcConfigDir: /data/slapd.d
+olcPidFile: /var/run/slapd.pid
+# olcTLSCACertificateFile: /etc/pki/tls/certs/example_ca.pem
+# olcTLSCertificateFile: /etc/pki/tls/certs/node-cert.pem
+# olcTLSCertificateKeyFile: /etc/pki/tls/private/node-key.pem
+olcTLSVerifyClient: never
+olcLogLevel: none
+# olcSecurity: simple_bind=128
+# olcLocalSSF: 128
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file:///etc/openldap/schema/core.ldif
+include: file:///etc/openldap/schema/cosine.ldif
+include: file:///etc/openldap/schema/duaconf.ldif
+include: file:///etc/openldap/schema/inetorgperson.ldif
+include: file:///etc/openldap/schema/ppolicy.ldif
+include: file:///etc/openldap/schema/openldap.ldif
+include: file:///etc/openldap/schema/java.ldif
+include: file:///etc/openldap/schema/fusiondirectory/samba.schema
+include: file:///etc/openldap/schema/fusiondirectory/core-fd.schema
+include: file:///etc/openldap/schema/fusiondirectory/core-fd-conf.schema
+include: file:///etc/openldap/schema/fusiondirectory/recovery-fd.schema
+include: file:///etc/openldap/schema/fusiondirectory/ldapns.schema
+
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAccess: {0}to attrs=userPassword
+  by self =xw
+  by anonymous auth
+  by * none
+olcAccess: {1}to * by * read
+olcSizelimit: size.soft=10000 size.hard=1000000
+olcTimelimit: time.soft=300 time.hard=3600
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcRootDN: cn=admin,cn=config
+olcRootPW: secret
+olcMonitoring: FALSE
+olcAccess: {0}to dn.subtree="cn=schema,cn=config"
+  by users read
+olcAccess: {1}to * by * none
+
+dn: olcDatabase={1}monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {1}monitor
+olcAddContentAcl: FALSE
+olcLastMod: TRUE
+olcMaxDerefDepth: 15
+olcReadOnly: FALSE
+olcSyncUseSubentry: FALSE
+olcMonitoring: FALSE
+olcAccess: {3}to dn.subtree="cn=monitor"
+  by dn.exact="cn=admin,cn=config" read
+  by dn.exact="cn=admin,dc=example,dc=com" read
+  by * none
+
+dn: olcDatabase={2}mdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcMdbConfig
+olcDatabase: {2}mdb
+olcMonitoring: TRUE
+olcSuffix: dc=example,dc=com
+olcRootDN: cn=admin,dc=example,dc=com
+olcRootPW: secret
+olcDbDirectory: /var/openldap-data/example.com
+olcDbMaxSize: 42949672960
+olcDbIndex: objectClass pres,eq
+olcDbIndex: cn pres,eq,sub
+olcDbIndex: uid pres,eq
+olcDbIndex: uidNumber pres,eq
+olcDbIndex: gidNumber pres,eq
+olcDbIndex: mail pres,eq,sub
+olcDbIndex: ou pres,eq
+# olcDbIndex: loginShell pres,eq
+olcDbIndex: sn pres,eq,sub
+olcDbIndex: givenName pres,eq,sub
+# olcDbIndex: memberUid pres,eq
+# olcDbIndex: nisMapName pres,eq
+# olcDbIndex: nisMapEntry pres,eq
+olcDbIndex: entryCSN eq
+olcDbIndex: entryUUID eq
+olcAccess: {0}to attrs=userPassword
+  by dn.exact="cn=admin,dc=example,dc=com" write
+  by dn.exact="cn=Replicator,dc=example,dc=com" read
+  by self =xw
+  by anonymous auth
+  by * none
+olcAccess: {2}to * by * read
+olcLimits: {0}dn.exact="cn=admin,dc=example,dc=com"
+  size.soft=unlimited size.hard=unlimited
+  time.soft=unlimited time.hard=unlimited
+olcLimits: {1}dn.exact="cn=Replicator,dc=example,dc=com"
+  size.soft=unlimited size.hard=unlimited
+  time.soft=unlimited time.hard=unlimited
+
+dn: olcOverlay=ppolicy,olcDatabase={2}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy
+olcPPolicyDefault: cn=default,ou=pwpolicies,dc=example,dc=com
+olcPPolicyHashCleartext: TRUE
+olcPPolicyUseLockout: FALSE

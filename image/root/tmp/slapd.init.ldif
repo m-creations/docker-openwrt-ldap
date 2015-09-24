@@ -1,0 +1,81 @@
+# Global config:
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+# Where the pid file is put. The init.d script
+# will not stop the server if you change this.
+olcPidFile: /var/run/slapd/slapd.pid
+# List of arguments that were passed to the server
+olcArgsFile: /var/run/slapd/slapd.args
+# Read slapd.conf(5) for possible values
+olcLogLevel: none
+# The tool-threads parameter sets the actual amount of cpu's that is used
+# for indexing.
+olcToolThreads: 1
+
+# Frontend settings
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+# The maximum number of entries that is returned for a search operation
+olcSizeLimit: 500
+# Allow unlimited access to local connection from the local root user
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+# Allow unauthenticated read access for schema and base DN autodiscovery
+olcAccess: {1}to dn.exact="" by * read
+olcAccess: {2}to dn.base="cn=Subschema" by * read
+
+# Config db settings
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+# Allow unlimited access to local connection from the local root user
+olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+
+# Load schemas
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file:///etc/openldap/schema/core.ldif
+include: file:///etc/openldap/schema/cosine.ldif
+include: file:///etc/openldap/schema/nis.ldif
+include: file:///etc/openldap/schema/duaconf.ldif
+include: file:///etc/openldap/schema/inetorgperson.ldif
+include: file:///etc/openldap/schema/ppolicy.ldif
+include: file:///etc/openldap/schema/openldap.ldif
+include: file:///etc/openldap/schema/java.ldif
+#include: file:///etc/openldap/schema/fusiondirectory/samba.schema
+#include: file:///etc/openldap/schema/fusiondirectory/core-fd.schema
+#include: file:///etc/openldap/schema/fusiondirectory/core-fd-conf.schema
+#include: file:///etc/openldap/schema/fusiondirectory/recovery-fd.schema
+#include: file:///etc/openldap/schema/fusiondirectory/ldapns.schema
+
+# Set defaults for the backend
+dn: olcBackend=@BACKEND@,cn=config
+objectClass: olcBackendConfig
+olcBackend: @BACKEND@
+
+# The database definition.
+dn: olcDatabase=@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: @BACKENDOBJECTCLASS@
+olcDatabase: @BACKEND@
+olcDbCheckpoint: 512 30
+olcLastMod: TRUE
+olcSuffix: @SUFFIX@
+olcDbDirectory: /var/openldap-data/example.com
+olcRootDN: cn=admin,@SUFFIX@
+olcRootPW: @PASSWORD@
+olcDbIndex: objectClass eq
+olcAccess: to attrs=userPassword,shadowLastChange
+  by self write
+  by anonymous auth
+  by dn="cn=admin,@SUFFIX@" write
+  by * none
+olcAccess: to dn.base="" by * read
+olcAccess: to *
+  by dn="cn=admin,@SUFFIX@" write
+  by * read
+

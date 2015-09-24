@@ -1,0 +1,51 @@
+dn: olcDatabase={3}mdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcMdbConfig
+olcDatabase: {3}mdb
+olcMonitoring: TRUE
+olcSuffix: cn=accesslog
+olcRootDN: cn=accesslog
+olcDbDirectory: /var/openldap-data/accesslog
+olcDbMaxSize: 42949672960
+olcDbIndex: default eq
+olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart
+olcAddContentAcl: FALSE
+olcLastMod: TRUE
+olcMaxDerefDepth: 15
+olcReadOnly: FALSE
+olcSyncUseSubentry: FALSE
+olcDbNoSync: TRUE
+olcAccess: {0}to *
+  by dn.exact="cn=admin,cn=config" read
+  by dn.exact="cn=admin,dc=example,dc=com" readolcModuleList
+  by dn.exact="cn=Replicator,dc=example,dc=com" read
+  by * none
+olcLimits: {0}dn.exact="cn=admin,dc=example,dc=com"
+  size.soft=unlimited size.hard=unlimited
+  time.soft=unlimited time.hard=unlimited
+olcLimits: {1}dn.exact="cn=Replicator,dc=example,dc=com"
+  size.soft=unlimited size.hard=unlimited
+  time.soft=unlimited time.hard=unlimited
+
+dn: olcOverlay=accesslog,olcDatabase={2}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcAccessLogConfig
+olcOverlay: accesslog
+olcAccessLogDB: cn=accesslog
+olcAccessLogOps: writes
+olcAccessLogPurge: 7+00:00 1+00:00
+olcAccessLogSuccess: TRUE
+
+dn: olcOverlay=syncprov,olcDatabase={2}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+olcSpNoPresent: FALSE
+olcSpReloadHint: TRUE
+
+dn: olcOverlay=syncprov,olcDatabase={3}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+olcSpNoPresent: TRUE
+olcSpReloadHint: TRUE

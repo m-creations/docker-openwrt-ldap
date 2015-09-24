@@ -1,0 +1,44 @@
+dn: dc=example,dc=com
+objectClass: top
+objectClass: dcobject
+objectClass: domain
+
+dn: cn=Manager,dc=example,dc=com
+cn: Manager
+objectClass: top
+objectClass: organizationalrole
+
+dn: ou=pwpolicies,dc=example,dc=com
+ou: pwpolicies
+objectClass: organizationalUnit
+objectClass: top
+
+dn: cn=default,ou=pwpolicies,dc=example,dc=com
+cn: default
+sn: Default Password Policy
+objectClass: pwdPolicyChecker
+objectClass: pwdPolicy
+objectClass: person
+objectClass: top
+pwdAttribute: userPassword
+pwdMinAge: 0
+pwdMaxAge: 0
+pwdInHistory: 0
+pwdCheckQuality: 0
+pwdMinLength: 6
+pwdExpireWarning: 0
+pwdGraceAuthNLimit: 0
+pwdLockout: TRUE
+pwdLockoutDuration: 3600
+pwdMaxFailure: 10
+pwdFailureCountInterval: 300
+pwdMustChange: FALSE
+pwdAllowUserChange: TRUE
+pwdSafeModify: FALSE
+
+dn: cn=Replicator,dc=example,dc=com
+cn: Replicator
+sn: LDAP Replication User
+objectClass: person
+objectClass: top
+userPassword: secret
