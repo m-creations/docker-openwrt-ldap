@@ -3,7 +3,7 @@ objectClass: olcGlobal
 cn: config
 olcAttributeOptions: lang-
 #olcConfigFile: /etc/openldap/slapd.conf.bak
-olcConfigDir: /var/openldap-data/example.com
+olcConfigDir: /var/openldap-data/@SUFFIXDOMAIN@
 olcPidFile: /var/run/slapd.pid
 # olcTLSCACertificateFile: /etc/pki/tls/certs/example_ca.pem
 # olcTLSCertificateFile: /etc/pki/tls/certs/node-cert.pem
@@ -24,11 +24,12 @@ include: file:///etc/openldap/schema/inetorgperson.ldif
 include: file:///etc/openldap/schema/ppolicy.ldif
 include: file:///etc/openldap/schema/openldap.ldif
 include: file:///etc/openldap/schema/java.ldif
-include: file:///etc/openldap/schema/fusiondirectory/samba.schema
-include: file:///etc/openldap/schema/fusiondirectory/core-fd.schema
-include: file:///etc/openldap/schema/fusiondirectory/core-fd-conf.schema
-include: file:///etc/openldap/schema/fusiondirectory/recovery-fd.schema
-include: file:///etc/openldap/schema/fusiondirectory/ldapns.schema
+include: file:///etc/openldap/schema/misc.ldif
+include: file:///etc/openldap/schema/pmi.ldif
+include: file:///etc/openldap/schema/nis.ldif
+include: file:///etc/openldap/schema/collective.ldif
+include: file:///etc/openldap/schema/corba.ldif
+include: file:///etc/openldap/schema/dyngroup.ldif
 
 dn: olcDatabase={-1}frontend,cn=config
 objectClass: olcDatabaseConfig
@@ -46,7 +47,7 @@ dn: olcDatabase={0}config,cn=config
 objectClass: olcDatabaseConfig
 olcDatabase: {0}config
 olcRootDN: cn=admin,cn=config
-olcRootPW: secret
+olcRootPW: @PASSWORD@
 olcMonitoring: FALSE
 olcAccess: {0}to dn.subtree="cn=schema,cn=config"
   by users read
@@ -63,7 +64,7 @@ olcSyncUseSubentry: FALSE
 olcMonitoring: FALSE
 olcAccess: {3}to dn.subtree="cn=monitor"
   by dn.exact="cn=admin,cn=config" read
-  by dn.exact="cn=admin,dc=example,dc=com" read
+  by dn.exact="cn=admin,@SUFFIX@" read
   by * none
 
 dn: olcDatabase={2}mdb,cn=config
@@ -71,10 +72,10 @@ objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
 olcDatabase: {2}mdb
 olcMonitoring: TRUE
-olcSuffix: dc=example,dc=com
-olcRootDN: cn=admin,dc=example,dc=com
-olcRootPW: secret
-olcDbDirectory: /var/openldap-data/example.com
+olcSuffix: @SUFFIX@
+olcRootDN: cn=admin,@SUFFIX@
+olcRootPW: @PASSWORD@
+olcDbDirectory: /var/openldap-data/@SUFFIXDOMAIN@
 olcDbMaxSize: 42949672960
 olcDbIndex: objectClass pres,eq
 olcDbIndex: cn pres,eq,sub
@@ -92,16 +93,16 @@ olcDbIndex: givenName pres,eq,sub
 olcDbIndex: entryCSN eq
 olcDbIndex: entryUUID eq
 olcAccess: {0}to attrs=userPassword
-  by dn.exact="cn=admin,dc=example,dc=com" write
-  by dn.exact="cn=Replicator,dc=example,dc=com" read
+  by dn.exact="cn=admin,@SUFFIX@" write
+  by dn.exact="cn=Replicator,@SUFFIX@" read
   by self =xw
   by anonymous auth
   by * none
 olcAccess: {2}to * by * read
-olcLimits: {0}dn.exact="cn=admin,dc=example,dc=com"
+olcLimits: {0}dn.exact="cn=admin,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
-olcLimits: {1}dn.exact="cn=Replicator,dc=example,dc=com"
+olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 
@@ -109,6 +110,6 @@ dn: olcOverlay=ppolicy,olcDatabase={2}mdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy
-olcPPolicyDefault: cn=default,ou=pwpolicies,dc=example,dc=com
+olcPPolicyDefault: cn=default,ou=pwpolicies,@SUFFIX@
 olcPPolicyHashCleartext: TRUE
 olcPPolicyUseLockout: FALSE

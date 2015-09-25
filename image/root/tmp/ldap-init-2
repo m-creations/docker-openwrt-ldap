@@ -17,13 +17,13 @@ olcSyncUseSubentry: FALSE
 olcDbNoSync: TRUE
 olcAccess: {0}to *
   by dn.exact="cn=admin,cn=config" read
-  by dn.exact="cn=admin,dc=example,dc=com" readolcModuleList
-  by dn.exact="cn=Replicator,dc=example,dc=com" read
+  by dn.exact="cn=admin,@SUFFIX@" readolcModuleList
+  by dn.exact="cn=Replicator,@SUFFIX@" read
   by * none
-olcLimits: {0}dn.exact="cn=admin,dc=example,dc=com"
+olcLimits: {0}dn.exact="cn=admin,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
-olcLimits: {1}dn.exact="cn=Replicator,dc=example,dc=com"
+olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 

@@ -32,23 +32,23 @@ for elem in "${domain_elems[@]}" ; do
     fi
 done
 
-printf "SLAPD Config is ${SLAPD_CONF}\n"
-printf "root DN is cn=Manager,cn=config\n"
-printf "root DN is cn=manager,$suffix\n\n"
+printf "SLAPD Config is ${SLAPD_CONF}\n";
+printf "root DN is cn=Manager,cn=config\n";
+printf "root DN is cn=manager,$suffix\n\n";
 
-cat <<EOF > /etc/openldap/slapd.conf
-
-include         /etc/openldap/schema/core.schema
-pidfile         /var/run/slapd.pid
-argsfile        /var/run/slapd.args
-database        ldif
-directory       /var/openldap-data
-
-suffix          "$suffix"
-rootdn          "cn=admin,$suffix"
-rootpw          secret
-
-EOF
+#cat <<EOF > /etc/openldap/slapd.conf
+#
+#include         /etc/openldap/schema/core.schema
+#pidfile         /var/run/slapd.pid
+#argsfile        /var/run/slapd.args
+#database        ldif
+#directory       /var/openldap-data
+#
+#suffix          "$suffix"
+#rootdn          "cn=admin,$suffix"
+#rootpw          secret
+#
+#EOF
 
 function update_permissions() { 
     local dir
@@ -58,6 +58,7 @@ function update_permissions() {
         [ -z "$SLAPD_GROUP" ] || chgrp -R -H "$SLAPD_GROUP" "$dir"
     fi
 }
+
 function create_ldap_directories() {
     mkdir -p /var/run/slapd/
     mkdir -p ${SLAPD_CONF}
@@ -66,9 +67,38 @@ function create_ldap_directories() {
     update_permissions ${SLAPD_CONF}
 }
 
-function initldif_import(){
-    local initldifsrc initldif basedn dc backend 
+function slapadd_ldif_import(){
+    local initldif initldifsrc slapaddoption
     initldifsrc="$1"
+    slapaddoption="$2"
+    initldif=`mktemp -t slapadd.XXXXXX`
+    echo "+---------- Import slapadd $initldifsrc - Start ---------------------------"
+    echo "Tmp file is $initldif"
+    parse_ldap_file $initldifsrc $initldif    
+    /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" ${slapaddoption} -l "${initldif}" 
+    echo "+---------- Import slapadd $initldifsrc - End ---------------------------"
+    #rm -f "${initldif}"    
+}
+
+
+function ldapadd_ldif_import(){
+    local initldif initldifsrc
+    initldifsrc="$1"
+    initldif=`mktemp -t slapadd.XXXXXX`
+    echo "+---------- Import ldapadd $initldifsrc - Start ---------------------------"
+    echo "Tmp file is $initldif"
+    parse_ldap_file $initldifsrc $initldif    
+    /usr/bin/ldapadd -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://${HOSTNAME} -D cn=Manager,cn=config -w $LDAP_ROOTPW -f  "${initldif}" 
+    echo "+---------- Import ldapadd $initldifsrc - End ---------------------------"
+    printf "\n\n\n\n\n";
+    #rm -f "${initldif}"    
+}
+
+function parse_ldap_file(){
+    local ldiffilesrc ldiffile basedn dc backend  ldifincludes
+    ldiffilesrc="$1"
+    ldiffile="$2"
+    echo "----------- Parsed Src $ldiffilesrc - Start ---------------------------"
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     dc="`echo $LDAP_DOMAIN | sed 's/^\.//; s/\..*$//'`"
 
@@ -87,32 +117,54 @@ function initldif_import(){
         fi
     fi
 
-    initldif=`mktemp -t slapadd.XXXXXX`
-    cat ${initldifsrc} > ${initldif}
+    
+    cat ${ldiffilesrc} > ${ldiffile}
 
     # Change some defaults
-    sed -i -e "s|@BACKEND@|$backend|g" ${initldif}
-    sed -i -e "s|@BACKENDOBJECTCLASS@|$backendobjectclass|g" ${initldif}
-    sed -i -e "s|@BACKENDOPTIONS@|$backendoptions|g" ${initldif}
-    sed -i -e "s|@SUFFIX@|$basedn|g" ${initldif}
-    sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${initldif}
-    echo "----------- Parsed Src $initldifsrc - Start ---------------------------"
-    cat ${initldif}
-    echo "----------- Parsed Src $initldifsrc - End ---------------------------"
-    echo "----------- Import parsed $initldifsrc - Start ---------------------------"
-    #slapadd -d 0 -F "${SLAPD_CONF}" -b "cn=config" -l "${initldif}" 
-    /usr/sbin/slapadd -d 1 -F "${SLAPD_CONF}" -b "cn=config" -l "${initldif}" 
-    echo "----------- Import parsed $initldifsrc - End ---------------------------"
-    update_permissions "${SLAPD_CONF}"    
+    sed -i -e "s|@BACKEND@|$backend|g" ${ldiffile}
+    sed -i -e "s|@BACKENDOBJECTCLASS@|$backendobjectclass|g" ${ldiffile}
+    sed -i -e "s|@BACKENDOPTIONS@|$backendoptions|g" ${ldiffile}
+    sed -i -e "s|@SUFFIX@|$basedn|g" ${ldiffile}
+    sed -i -e "s|@SUFFIXDOMAIN@|$LDAP_DOMAIN|g" ${ldiffile}
+    sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${ldiffile}
+  
+    echoDebug "`cat ${ldiffile}`"
+    
+    echo "----------- Parsed Src $ldiffilesrc - End ---------------------------"
 }
 
+function slapadd_additional_ldifs(){    
+    if [ -n "$(ls -A /etc/openldap/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
+        echo "------- /etc/openldap/schema-ldif-includes/*.ldif import started"
+        for file in `ls /etc/openldap/schema-ldif-includes/*.ldif`
+        do
+            slapadd_ldif_import "$file" "-b \"cn=config\""
+            echo "====> $file imported."
+        done
+    fi    
+    if [ -n "$(ls -A //var/openldap-data/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
+        echo "------- /var/openldap-data/schema-ldif-includes/*.ldif import started"
+        for file in `ls /var/openldap-data/schema-ldif-includes/*.ldif`
+        do
+            slapadd_ldif_import "$file" "-b \"cn=config\""
+            echo "====> $file imported."
+        done
+    fi
+}
 
-create_new_directory() {  
-    local basedn dc organization adminpass
+function echoDebug(){
+    msg="$1"
+    if [ ! $LAPDTOOLS_DEBUG_LEVEL -eq 0 ]; then
+        echo msg
+    fi
+}
+
+function create_new_directory() {  
+    local basedn dc organization initldif
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     dc="`echo $LDAP_DOMAIN | sed 's/^\.//; s/\..*$//'`"
 
-    echo -n "  Creating LDAP directory... " >&2
+    echo -n "  Creating LDAP directory..."
 
     initldif=`mktemp -t slapadd.XXXXXX`
 
@@ -131,50 +183,71 @@ cn: admin
 description: LDAP administrator
 userPassword: $LDAP_ROOTPW
 EOF
-    echo "----------- Parsed Src $initldifsrc - Start ---------------------------"
-    cat ${initldif}
-    echo "----------- Parsed Src $initldifsrc - End ---------------------------"
-    /usr/sbin/slapadd -d 1 -F "${SLAPD_CONF}" -b "${basedn}" -l "${initldif}"
+    /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${initldif}"
 
-    rm -f ${initldif}
-    echo "done." >&2
+    #rm -f "${initldif}"
+    echo "Create $basedn node done."
 }
 
 
 function slapd_init_ldif(){
-initldif_import "/tmp/slapd.init.ldif"
+    slapadd_ldif_import "/tmp/slapd.init.ldif" "-n 0"
+    slapadd_additional_ldifs
+    update_permissions "${SLAPD_CONF}"
 }
 
+function sldaptest(){
+    mkdir /tmp/ldif_output
+    slaptest -f /tmp/schema_convert.cfg -F /tmp/ldif_output
+    cd '/tmp/ldif_output/cn=config/cn=schema'
+
+    insuffix=", cn=schema, cn=config"
+
+    echo "adding fusion directory's schemas to ldap"
+
+    for file in `ls`
+    do
+        name=`echo "$file"|cut -d '}' -f 2|cut -d "." -f 1`
+        sed s/\{.*\}"$name"/"$name"/ < $file > /tmp/file
+        sed s/"dn: cn=$name"/'&'"$insuffix"/ < /tmp/file > /tmp/file_b
+        sed /^structuralObjectClass/,//d < /tmp/file_b > $file
+        #ldapadd -Y EXTERNAL -H ldapi:/// -f $file
+    done
+}
 
 function slapd_init_with_replication(){
-initldif_import "/tmp/ldap-init-1"
+    slapadd_ldif_import "/tmp/ldap-init-1" "-n 0"
+    slapadd_additional_ldifs
+    update_permissions "${SLAPD_CONF}"
 }
 
 
 function slapd_init_with_replication_ldapadd(){
-ldapadd -H ldap://${HOSTNAME} -D cn=Manager,cn=config -w $LDAP_ROOTPW -f /tmp/ldap-init-2
-ldapadd -H ldap://${HOSTNAME} -D cn=Manager,${suffix} -w $LDAP_ROOTPW -f /tmp/ldap-init-3
+    ldapadd_ldif_import "/tmp/ldap-init-2"
+    ldapadd_ldif_import "/tmp/ldap-init-3"
 }
-
 
 firsttime=0 
 if [ ! -e "${SLAPD_CONF}" ]; then
-firsttime=1
-create_ldap_directories
-slapd_init_with_replication
-#slapd_init_ldif
-create_new_directory
-
+    printf "First time configuration with slappadd starting...\n";
+    firsttime=1
+    create_ldap_directories
+    slapd_init_with_replication
+    #slapd_init_ldif
+    create_new_directory
 fi
 
 #exec /usr/sbin/slapd -F ${SLAPD_CONF} -h "ldap://localhost:389/ ldaps:///" -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 0 &
-exec /usr/sbin/slapd -F ${SLAPD_CONF} -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 1 &
+exec /usr/sbin/slapd -F ${SLAPD_CONF} -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d ${SLAPD_DEBUG_LEVEL} &
 
 child=$!
+
+printf "Slapd started... \n";
 
 sleep 2
 
 if [ $firsttime -eq 1 ]; then
+    printf "First time after start configuration with ldpaadd starting\n";
     slapd_init_with_replication_ldapadd
 fi
 

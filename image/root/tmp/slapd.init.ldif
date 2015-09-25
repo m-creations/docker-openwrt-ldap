@@ -46,11 +46,7 @@ include: file:///etc/openldap/schema/inetorgperson.ldif
 include: file:///etc/openldap/schema/ppolicy.ldif
 include: file:///etc/openldap/schema/openldap.ldif
 include: file:///etc/openldap/schema/java.ldif
-#include: file:///etc/openldap/schema/fusiondirectory/samba.schema
-#include: file:///etc/openldap/schema/fusiondirectory/core-fd.schema
-#include: file:///etc/openldap/schema/fusiondirectory/core-fd-conf.schema
-#include: file:///etc/openldap/schema/fusiondirectory/recovery-fd.schema
-#include: file:///etc/openldap/schema/fusiondirectory/ldapns.schema
+
 
 # Set defaults for the backend
 dn: olcBackend=@BACKEND@,cn=config

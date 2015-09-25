@@ -1,19 +1,19 @@
-dn: dc=example,dc=com
+dn: @SUFFIX@
 objectClass: top
 objectClass: dcobject
 objectClass: domain
 
-dn: cn=Manager,dc=example,dc=com
+dn: cn=Manager,@SUFFIX@
 cn: Manager
 objectClass: top
 objectClass: organizationalrole
 
-dn: ou=pwpolicies,dc=example,dc=com
+dn: ou=pwpolicies,@SUFFIX@
 ou: pwpolicies
 objectClass: organizationalUnit
 objectClass: top
 
-dn: cn=default,ou=pwpolicies,dc=example,dc=com
+dn: cn=default,ou=pwpolicies,@SUFFIX@
 cn: default
 sn: Default Password Policy
 objectClass: pwdPolicyChecker
@@ -36,9 +36,9 @@ pwdMustChange: FALSE
 pwdAllowUserChange: TRUE
 pwdSafeModify: FALSE
 
-dn: cn=Replicator,dc=example,dc=com
+dn: cn=Replicator,@SUFFIX@
 cn: Replicator
 sn: LDAP Replication User
 objectClass: person
 objectClass: top
-userPassword: secret
+userPassword: @PASSWORD@

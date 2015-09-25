@@ -22,8 +22,19 @@ docker run -e LDAP_DOMAIN=example.com \
 	   mcreations/openwrt-ldap
 ```
 
+How to import ldfis
+-------------------
+First of all system check ldif files in this folder to import: 
+```
+/etc/openldap/schema-ldif-includes/*.ldif
+```
+Then will check following directory for more ldifs:
+```
+/var/openldap-data/schema-ldif-includes/*.ldif
+```
+You should sort file names for importing by order in each folders.
+
 Github Repo
 -----------
-
 https://github.com/m-creations/docker-openwrt-ldap
 
