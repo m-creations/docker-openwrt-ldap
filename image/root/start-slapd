@@ -112,11 +112,6 @@ create_new_directory() {
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     dc="`echo $LDAP_DOMAIN | sed 's/^\.//; s/\..*$//'`"
 
-    
-    # Encode to utf8 and base64 encode the organization.
-    
-    organization=`encode_utf8 "$RET"`
-
     echo -n "  Creating LDAP directory... " >&2
 
     initldif=`mktemp -t slapadd.XXXXXX`

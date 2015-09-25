@@ -2,8 +2,8 @@ dn: cn=config
 objectClass: olcGlobal
 cn: config
 olcAttributeOptions: lang-
-olcConfigFile: /etc/openldap/slapd.conf.bak
-olcConfigDir: /data/slapd.d
+#olcConfigFile: /etc/openldap/slapd.conf.bak
+olcConfigDir: /var/openldap-data/example.com
 olcPidFile: /var/run/slapd.pid
 # olcTLSCACertificateFile: /etc/pki/tls/certs/example_ca.pem
 # olcTLSCertificateFile: /etc/pki/tls/certs/node-cert.pem
