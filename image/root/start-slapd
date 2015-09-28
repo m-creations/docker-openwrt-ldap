@@ -133,7 +133,7 @@ function parse_ldap_file(){
     echo "----------- Parsed Src $ldiffilesrc - End ---------------------------"
 }
 
-function slapadd_additional_ldifs(){    
+function slapadd_additional_ldifs_level_0(){    
     if [ -n "$(ls -A /etc/openldap/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
         echo "------- /etc/openldap/schema-ldif-includes/*.ldif import started"
         for file in `ls /etc/openldap/schema-ldif-includes/*.ldif`
@@ -142,11 +142,29 @@ function slapadd_additional_ldifs(){
             echo "====> $file imported."
         done
     fi    
-    if [ -n "$(ls -A //var/openldap-data/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
+    if [ -n "$(ls -A /var/openldap-data/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
         echo "------- /var/openldap-data/schema-ldif-includes/*.ldif import started"
         for file in `ls /var/openldap-data/schema-ldif-includes/*.ldif`
         do
             slapadd_ldif_import "$file" "-n 0"
+            echo "====> $file imported."
+        done
+    fi
+}
+function slapadd_additional_ldifs_level_2(){        
+    if [ -n "$(ls -A /etc/openldap/ldif-imports/*.ldif 2> /dev/null)" ]; then
+        echo "------- /etc/openldap/ldif-imports/*.ldif import started"
+        for file in `ls /etc/openldap/ldif-imports/*.ldif`
+        do
+            slapadd_ldif_import "$file" "-n 2"
+            echo "====> $file imported."
+        done
+    fi    
+    if [ -n "$(ls -A /var/openldap-data/ldif-imports/*.ldif 2> /dev/null)" ]; then
+        echo "------- /var/openldap-data/ldif-imports/*.ldif import started"
+        for file in `ls /var/openldap-data/ldif-imports/*.ldif`
+        do
+            slapadd_ldif_import "$file" "-n 2"
             echo "====> $file imported."
         done
     fi
@@ -160,32 +178,25 @@ function echoDebug(){
 }
 
 function create_new_directory() {  
-    local basedn dc organization initldif
+    local basedn dc organization ldiffile
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     dc="`echo $LDAP_DOMAIN | sed 's/^\.//; s/\..*$//'`"
 
     echo -n "  Creating LDAP directory..."
 
-    initldif=`mktemp -t slapadd.XXXXXX`
+    ldiffile=`mktemp -t slapadd.XXXXXX`
+    cat "/tmp/ldap-base" > ${ldiffile}
 
-    cat <<EOF > "${initldif}"
-dn: $basedn
-objectClass: top
-objectClass: dcObject
-objectClass: organization
-o: $LDAP_ORGANIZATION
-dc: $dc
+    # Change some defaults
+    sed -i -e "s|@SUFFIX@|$basedn|g" ${ldiffile}
+    sed -i -e "s|@SUFFIXDOMAIN@|$LDAP_DOMAIN|g" ${ldiffile}
+    sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${ldiffile}
+    sed -i -e "s|@DOMAINCOMPONENT@|$dc|g" ${ldiffile}
+    sed -i -e "s|@ORGANIZATION@|$LDAP_ORGANIZATION|g" ${ldiffile}
 
-dn: cn=admin,$basedn
-objectClass: simpleSecurityObject
-objectClass: organizationalRole
-cn: admin
-description: LDAP administrator
-userPassword: $LDAP_ROOTPW
-EOF
-    /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${initldif}"
+    /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${ldiffile}"
 
-    #rm -f "${initldif}"
+    #rm -f "${ldiffile}"
     echo "Create $basedn node done."
 }
 
@@ -217,7 +228,7 @@ function sldaptest(){
 
 function slapd_init_with_replication(){
     slapadd_ldif_import "/tmp/ldap-init-1" "-n 0"
-    slapadd_additional_ldifs
+    slapadd_additional_ldifs_level_0
     update_permissions "${SLAPD_CONF}"
 }
 
@@ -235,6 +246,7 @@ if [ ! -e "${SLAPD_CONF}" ]; then
     slapd_init_with_replication
     #slapd_init_ldif
     create_new_directory
+    slapadd_additional_ldifs_level_2
 fi
 
 #exec /usr/sbin/slapd -F ${SLAPD_CONF} -h "ldap://localhost:389/ ldaps:///" -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 0 &

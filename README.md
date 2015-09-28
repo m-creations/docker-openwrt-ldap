@@ -24,7 +24,7 @@ docker run -e LDAP_DOMAIN=example.com \
 
 How to import ldfis
 -------------------
-First of all system check ldif files in this folder to import: 
+First of all the system check ldif files in the following folder to import at databse level 0:
 ```
 /etc/openldap/schema-ldif-includes/*.ldif
 ```
@@ -33,6 +33,17 @@ Then will check following directory for more ldifs:
 /var/openldap-data/schema-ldif-includes/*.ldif
 ```
 You should sort file names for importing by order in each folders.
+
+Second the system check ldif files in the following folder to import at databse level 2:
+```
+/etc/openldap/ldif-imports/*.ldif
+```
+Then will check following directory for more ldifs:
+```
+/var/openldap-data/ldif-imports/*.ldif
+```
+You should sort file names for importing by order in each folders.
+
 
 Github Repo
 -----------
