@@ -5,9 +5,9 @@ objectClass: organization
 o: @ORGANIZATION@
 dc: @DOMAINCOMPONENT@
 
-dn: cn=admin,@SUFFIX@
+dn: @ROOTDN@
 objectClass: simpleSecurityObject
 objectClass: organizationalRole
-cn: admin
-description: LDAP administrator
+cn: @LDAPROOT@
+description: LDAP Administrator
 userPassword: @PASSWORD@

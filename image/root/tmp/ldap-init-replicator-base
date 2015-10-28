@@ -1,7 +1,6 @@
 dn: @SUFFIX@
 objectClass: top
 objectClass: dcobject
-objectClass: domain
 
 dn: cn=Manager,@SUFFIX@
 cn: Manager
@@ -41,4 +40,4 @@ cn: Replicator
 sn: LDAP Replication User
 objectClass: person
 objectClass: top
-userPassword: @PASSWORD@
+userPassword: @REPLICATORPW@

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-mkdir /var/run/
+mkdir -p /var/run/
 
 
 echo 'openldap:x:1000:1000::/home/openldap:' >>/etc/passwd

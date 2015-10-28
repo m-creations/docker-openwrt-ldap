@@ -71,3 +71,12 @@ Level   Keyword         Description
 16384   (0x4000 sync)   syncrepl consumer processing
 32768   (0x8000 none)   only messages that get logged whatever log level is set
 ```
+
+
+REPLICATION
+-----------
+`LDAP_IS_MASTER` default is false but for a master should be true
+
+`--link ldap-master:replication-provider-server`
+`REPLICATION_PROVIDER_URL` defaut value is ldaps://replication-provider-server:389
+

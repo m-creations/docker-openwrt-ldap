@@ -5,7 +5,7 @@ olcDatabase: {3}mdb
 olcMonitoring: TRUE
 olcSuffix: cn=accesslog
 olcRootDN: cn=accesslog
-olcDbDirectory: /var/openldap-data/accesslog
+olcDbDirectory: /var/openldap-data/@SUFFIXDOMAIN@/accesslog
 olcDbMaxSize: 42949672960
 olcDbIndex: default eq
 olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart
@@ -16,11 +16,11 @@ olcReadOnly: FALSE
 olcSyncUseSubentry: FALSE
 olcDbNoSync: TRUE
 olcAccess: {0}to *
-  by dn.exact="cn=admin,cn=config" read
-  by dn.exact="cn=admin,@SUFFIX@" readolcModuleList
+  by dn.exact="cn=Manager,cn=config" read
+  by dn.exact="cn=Manager,@SUFFIX@" read
   by dn.exact="cn=Replicator,@SUFFIX@" read
   by * none
-olcLimits: {0}dn.exact="cn=admin,@SUFFIX@"
+olcLimits: {0}dn.exact="cn=Manager,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"

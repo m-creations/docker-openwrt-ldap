@@ -62,16 +62,18 @@ olcDbCheckpoint: 512 30
 olcLastMod: TRUE
 olcSuffix: @SUFFIX@
 olcDbDirectory: /var/openldap-data/example.com
-olcRootDN: cn=admin,@SUFFIX@
+olcRootDN: @ROOTDN@
 olcRootPW: @PASSWORD@
 olcDbIndex: objectClass eq
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
-  by dn="cn=admin,@SUFFIX@" write
+  by dn="@ROOTDN@" write
+  by dn="@ADMINDN@" write
   by * none
 olcAccess: to dn.base="" by * read
 olcAccess: to *
-  by dn="cn=admin,@SUFFIX@" write
+  by dn="@ROOTDN@" write
+  by dn="@ADMINDN@" write
   by * read
 

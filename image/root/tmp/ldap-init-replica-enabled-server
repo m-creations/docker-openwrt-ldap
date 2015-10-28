@@ -46,7 +46,7 @@ olcTimelimit: time.soft=300 time.hard=3600
 dn: olcDatabase={0}config,cn=config
 objectClass: olcDatabaseConfig
 olcDatabase: {0}config
-olcRootDN: cn=admin,cn=config
+olcRootDN: cn=Manager,cn=config
 olcRootPW: @PASSWORD@
 olcMonitoring: FALSE
 olcAccess: {0}to dn.subtree="cn=schema,cn=config"
@@ -63,8 +63,8 @@ olcReadOnly: FALSE
 olcSyncUseSubentry: FALSE
 olcMonitoring: FALSE
 olcAccess: {3}to dn.subtree="cn=monitor"
-  by dn.exact="cn=admin,cn=config" read
-  by dn.exact="cn=admin,@SUFFIX@" read
+  by dn.exact="cn=Manager,cn=config" read
+  by dn.exact="cn=Manager,@SUFFIX@" read
   by * none
 
 dn: olcDatabase={2}mdb,cn=config
@@ -73,7 +73,7 @@ objectClass: olcMdbConfig
 olcDatabase: {2}mdb
 olcMonitoring: TRUE
 olcSuffix: @SUFFIX@
-olcRootDN: cn=admin,@SUFFIX@
+olcRootDN: cn=Manager,@SUFFIX@
 olcRootPW: @PASSWORD@
 olcDbDirectory: /var/openldap-data/@SUFFIXDOMAIN@
 olcDbMaxSize: 42949672960
@@ -84,22 +84,22 @@ olcDbIndex: uidNumber pres,eq
 olcDbIndex: gidNumber pres,eq
 olcDbIndex: mail pres,eq,sub
 olcDbIndex: ou pres,eq
-# olcDbIndex: loginShell pres,eq
+olcDbIndex: loginShell pres,eq
 olcDbIndex: sn pres,eq,sub
 olcDbIndex: givenName pres,eq,sub
-# olcDbIndex: memberUid pres,eq
-# olcDbIndex: nisMapName pres,eq
-# olcDbIndex: nisMapEntry pres,eq
+olcDbIndex: memberUid pres,eq
+olcDbIndex: nisMapName pres,eq
+olcDbIndex: nisMapEntry pres,eq
 olcDbIndex: entryCSN eq
 olcDbIndex: entryUUID eq
 olcAccess: {0}to attrs=userPassword
-  by dn.exact="cn=admin,@SUFFIX@" write
+  by dn.exact="cn=Manager,@SUFFIX@" write
   by dn.exact="cn=Replicator,@SUFFIX@" read
   by self =xw
   by anonymous auth
   by * none
 olcAccess: {2}to * by * read
-olcLimits: {0}dn.exact="cn=admin,@SUFFIX@"
+olcLimits: {0}dn.exact="cn=Manager,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"
