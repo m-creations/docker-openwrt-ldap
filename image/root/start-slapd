@@ -83,7 +83,7 @@ function slapadd_ldif_import(){
     slapaddoption="$2"
     initldif=`mktemp -t slapadd.XXXXXX`
     echo "+---------- Import slapadd $initldifsrc - Start ---------------------------"
-    echo "Tmp file is $initldif"
+    echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
     /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" ${slapaddoption} -l "${initldif}"
     echo "+---------- Import slapadd $initldifsrc - End ---------------------------"
@@ -95,10 +95,10 @@ function ldapadd_ldif_import(){
     local initldif initldifsrc binddn
     initldifsrc="$1"
     binddn="$2"
-    initldif=`mktemp -t slapadd.XXXXXX`
+    initldif=`mktemp -t ldapadd.XXXXXX`
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     echo "+---------- Import ldapadd $initldifsrc - Start ---------------------------"
-    echo "Tmp file is $initldif"
+    echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
     /usr/bin/ldapadd -x -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "${binddn}" -w $LDAP_ROOTPW -f  "${initldif}"
     echo "+---------- Import ldapadd $initldifsrc - End ---------------------------"
@@ -109,10 +109,10 @@ function ldapmodify_ldif_import(){
     local initldif initldifsrc binddn
     initldifsrc="$1"
     binddn="$2"
-    initldif=`mktemp -t slapadd.XXXXXX`
+    initldif=`mktemp -t ldapmodify.XXXXXX`
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     echo "+---------- Import ldapmodify $initldifsrc - Start ---------------------------"
-    echo "Tmp file is $initldif"
+    echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
     /usr/bin/ldapmodify -x -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "{$binddn}" -w $LDAP_ROOTPW -f  "${initldif}"
     echo "+---------- Import ldapmodify $initldifsrc - End ---------------------------"
@@ -253,9 +253,11 @@ function echoDebug(){
 }
 
 function create_new_directory() {
-    local basedn dc organization ldiffile
+    local basedn dc organization ldiffile rootdn rootconfigdn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     dc="`echo $LDAP_DOMAIN | sed 's/^\.//; s/\..*$//'`"
+    rootdn="cn=${LDAP_ROOT},$basedn"
+    rootconfigdn="cn=${LDAP_ROOT},cn=config"
 
     echo -n "  Creating LDAP directory..."
 
@@ -268,6 +270,11 @@ function create_new_directory() {
     sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${ldiffile}
     sed -i -e "s|@DOMAINCOMPONENT@|$dc|g" ${ldiffile}
     sed -i -e "s|@ORGANIZATION@|$LDAP_ORGANIZATION|g" ${ldiffile}
+    sed -i -e "s|@LDAPROOT@|$LDAP_ROOT|g" ${ldiffile}
+    sed -i -e "s|@ROOTDN@|$rootdn|g" ${ldiffile}
+    sed -i -e "s|@ROOTCONFIGDN@|$rootconfigdn|g" ${ldiffile}
+    sed -i -e "s|@REPLICATORPW@|$LDAP_REPLICATOR_PW|g" ${ldiffile}
+    sed -i -e "s|@MASTERPW@|$LDAP_MASTER_PW|g" ${ldiffile}
 
     /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${ldiffile}"
 
@@ -335,6 +342,7 @@ if [ ! -e "${SLAPD_CONF}" ]; then
     slapadd_additional_ldifs_level_2
     ldapadd_additional_ldifs "cn=Manager,$basedn"
     ldapmodify_additional_ldifs "cn=Manager,$basedn"
+    ldapmodify_additional_ldifs "cn=Manager,cn=config"
 fi
 
 #exec /usr/sbin/slapd -F ${SLAPD_CONF} -h "ldap://localhost:389/ ldaps:///" -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 0 &
