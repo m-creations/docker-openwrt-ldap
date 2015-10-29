@@ -159,9 +159,7 @@ function parse_ldap_file(){
     sed -i -e "s|@ROOTCONFIGDN@|$rootconfigdn|g" ${ldiffile}
     sed -i -e "s|@REPLICATORPW@|$LDAP_REPLICATOR_PW|g" ${ldiffile}
     sed -i -e "s|@MASTERPW@|$LDAP_MASTER_PW|g" ${ldiffile}
-
-    echoDebug "`cat ${ldiffile}`"
-
+    sed -i -e "s|@REPLICATION_PROVIDER_URL@|$REPLICATION_PROVIDER_URL|g" ${ldiffile}
     echo "----------- Parsed Src $ldiffilesrc - End ---------------------------"
 }
 
@@ -275,6 +273,7 @@ function create_new_directory() {
     sed -i -e "s|@ROOTCONFIGDN@|$rootconfigdn|g" ${ldiffile}
     sed -i -e "s|@REPLICATORPW@|$LDAP_REPLICATOR_PW|g" ${ldiffile}
     sed -i -e "s|@MASTERPW@|$LDAP_MASTER_PW|g" ${ldiffile}
+    sed -i -e "s|@REPLICATION_PROVIDER_URL@|$REPLICATION_PROVIDER_URL|g" ${ldiffile}
 
     /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${ldiffile}"
 
@@ -324,7 +323,7 @@ function slapd_init_as_master(){
 function slapd_init_as_slave(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
-    ldapadd_ldif_import "/tmp/ldap-init-replica-cunsumer" "cn=Manager,cn=config"
+    ldapmodify_ldif_import "/tmp/ldap-init-replica-cunsumer" "cn=Manager,cn=config"
 }
 
 

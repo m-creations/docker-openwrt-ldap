@@ -1,0 +1,20 @@
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+add: olcSyncrepl
+olcSyncrepl: rid=0
+  provider="@REPLICATION_PROVIDER_URL@"
+  searchbase="@SUFFIX@"
+  type=refreshAndPersist
+  retry="60 10 300 +"
+  scope=sub
+  schemachecking=on
+  bindmethod=simple
+  binddn="cn=Replicator,@SUFFIX@"
+  credentials=@REPLICATORPW@
+  logbase="cn=accesslog"
+  logfilter="(objectClass=*)"
+  syncdata=accesslog
+-
+add: olcUpdateRef
+olcUpdateRef: @REPLICATION_PROVIDER_URL@
+-
