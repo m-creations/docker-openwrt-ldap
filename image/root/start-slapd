@@ -85,6 +85,7 @@ function slapadd_ldif_import(){
     echo "+---------- Import slapadd $initldifsrc - Start ---------------------------"
     echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
+    echo "/usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F \"${SLAPD_CONF}\" ${slapaddoption} -l \"${initldif}\""
     /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" ${slapaddoption} -l "${initldif}"
     echo "+---------- Import slapadd $initldifsrc - End ---------------------------"
     #rm -f "${initldif}"
@@ -100,7 +101,8 @@ function ldapadd_ldif_import(){
     echo "+---------- Import ldapadd $initldifsrc - Start ---------------------------"
     echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
-    /usr/bin/ldapadd -x -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "${binddn}" -w $LDAP_ROOTPW -f  "${initldif}"
+    echo "/usr/bin/ldapadd -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D \"$binddn\" -w $LDAP_ROOTPW -f  \"${initldif}\""
+    /usr/bin/ldapadd -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "$binddn" -w $LDAP_ROOTPW -f  "${initldif}"
     echo "+---------- Import ldapadd $initldifsrc - End ---------------------------"
     #rm -f "${initldif}"
 }
@@ -114,7 +116,8 @@ function ldapmodify_ldif_import(){
     echo "+---------- Import ldapmodify $initldifsrc - Start ---------------------------"
     echo "-- Tmp file is $initldif"
     parse_ldap_file $initldifsrc $initldif
-    /usr/bin/ldapmodify -x -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "{$binddn}" -w $LDAP_ROOTPW -f  "${initldif}"
+    echo "/usr/bin/ldapmodify -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D \"$binddn\" -w $LDAP_ROOTPW -f  \"${initldif}\""
+    /usr/bin/ldapmodify -d $LAPDTOOLS_DEBUG_LEVEL -H ldap://localhost:389 -D "$binddn" -w $LDAP_ROOTPW -f  "${initldif}"
     echo "+---------- Import ldapmodify $initldifsrc - End ---------------------------"
     #rm -f "${initldif}"
 }
@@ -228,7 +231,7 @@ function ldapmodify_additional_ldifs(){
         echo "------- /etc/openldap/modify-ldif-imports/*.ldif import started"
         for file in `ls /etc/openldap/modify-ldif-imports/*.ldif`
         do
-            ldapmodify_ldif_import "$file" '$binddn'
+            ldapmodify_ldif_import "$file" "$binddn"
             echo "====> $file imported."
         done
     fi
@@ -317,7 +320,7 @@ function slapd_init_as_master(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
-    ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,$basedn"
+    ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,cn=config"
 }
 
 function slapd_init_as_slave(){
@@ -339,9 +342,6 @@ if [ ! -e "${SLAPD_CONF}" ]; then
     slapadd_additional_ldifs_level_0
     create_new_directory
     slapadd_additional_ldifs_level_2
-    ldapadd_additional_ldifs "cn=Manager,$basedn"
-    ldapmodify_additional_ldifs "cn=Manager,$basedn"
-    ldapmodify_additional_ldifs "cn=Manager,cn=config"
 fi
 
 #exec /usr/sbin/slapd -F ${SLAPD_CONF} -h "ldap://localhost:389/ ldaps:///" -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 0 &
@@ -349,11 +349,19 @@ exec /usr/sbin/slapd -F ${SLAPD_CONF} -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d ${SL
 
 child=$!
 
-printf "Slapd started... \n";
+printf "\n\nSlapd started... \n\n\n";
 
 sleep 2
 
+while [ ! -f /tmp/run/slapd.pid ]
+do
+    echo -e "witing to slapd starting up ..."
+    sleep 1
+done
+
 if [ $firsttime -eq 1 ]; then
+    ldapmodify_additional_ldifs "cn=Manager,cn=config"
+    ldapadd_additional_ldifs "cn=Manager,cn=config"
     if [ "$LDAP_IS_MASTER" == "true" ]; then
         slapd_init_as_master
     else 

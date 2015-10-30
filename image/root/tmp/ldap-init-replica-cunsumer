@@ -14,6 +14,8 @@ olcSyncrepl: rid=0
   logbase="cn=accesslog"
   logfilter="(objectClass=*)"
   syncdata=accesslog
+  starttls=no
+  tls_reqcert=never
 -
 add: olcUpdateRef
 olcUpdateRef: @REPLICATION_PROVIDER_URL@
