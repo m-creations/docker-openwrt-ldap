@@ -11,3 +11,8 @@ objectClass: organizationalRole
 cn: @LDAPROOT@
 description: LDAP Administrator
 userPassword: @PASSWORD@
+
+dn: cn=Manager,@SUFFIX@
+cn: Manager
+objectClass: top
+objectClass: organizationalrole

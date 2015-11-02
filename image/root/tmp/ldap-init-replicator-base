@@ -1,12 +1,3 @@
-dn: @SUFFIX@
-objectClass: top
-objectClass: dcobject
-
-dn: cn=Manager,@SUFFIX@
-cn: Manager
-objectClass: top
-objectClass: organizationalrole
-
 dn: ou=pwpolicies,@SUFFIX@
 ou: pwpolicies
 objectClass: organizationalUnit

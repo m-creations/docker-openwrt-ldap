@@ -147,7 +147,6 @@ function parse_ldap_file(){
         fi
     fi
 
-
     cat ${ldiffilesrc} > ${ldiffile}
 
     # Change some defaults
@@ -156,6 +155,8 @@ function parse_ldap_file(){
     sed -i -e "s|@BACKENDOPTIONS@|$backendoptions|g" ${ldiffile}
     sed -i -e "s|@SUFFIX@|$basedn|g" ${ldiffile}
     sed -i -e "s|@SUFFIXDOMAIN@|$LDAP_DOMAIN|g" ${ldiffile}
+    sed -i -e "s|@DOMAINCOMPONENT@|$dc|g" ${ldiffile}
+    sed -i -e "s|@ORGANIZATION@|$LDAP_ORGANIZATION|g" ${ldiffile}
     sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${ldiffile}
     sed -i -e "s|@LDAPROOT@|$LDAP_ROOT|g" ${ldiffile}
     sed -i -e "s|@ROOTDN@|$rootdn|g" ${ldiffile}
@@ -163,88 +164,60 @@ function parse_ldap_file(){
     sed -i -e "s|@REPLICATORPW@|$LDAP_REPLICATOR_PW|g" ${ldiffile}
     sed -i -e "s|@MASTERPW@|$LDAP_MASTER_PW|g" ${ldiffile}
     sed -i -e "s|@REPLICATION_PROVIDER_URL@|$REPLICATION_PROVIDER_URL|g" ${ldiffile}
+
     echo "----------- Parsed Src $ldiffilesrc - End ---------------------------"
 }
 
 function slapadd_additional_ldifs_level_0(){
-    if [ -n "$(ls -A /etc/openldap/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
-        echo "------- /etc/openldap/schema-ldif-includes/*.ldif import started"
-        for file in `ls /etc/openldap/schema-ldif-includes/*.ldif`
-        do
-            slapadd_ldif_import "$file" "-n 0"
-            echo "====> $file imported."
-        done
-    fi
-    if [ -n "$(ls -A /var/openldap-data/schema-ldif-includes/*.ldif 2> /dev/null)" ]; then
-        echo "------- /var/openldap-data/schema-ldif-includes/*.ldif import started"
-        for file in `ls /var/openldap-data/schema-ldif-includes/*.ldif`
-        do
-            slapadd_ldif_import "$file" "-n 0"
-            echo "====> $file imported."
-        done
-    fi
+    local location
+    for location in "/etc/openldap/schema-ldif-includes/*.ldif" "/var/openldap-data/schema-ldif-includes/*.ldif"; do
+        if [ -n "$(ls -A $location 2> /dev/null)" ]; then
+            echo "------- $location import started"
+            for file in `ls $location`
+            do
+                slapadd_ldif_import "$file" "-n 0"
+                echo "====> $file imported."
+            done
+        fi
+    done 
 }
+
 function slapadd_additional_ldifs_level_2(){
-    if [ -n "$(ls -A /etc/openldap/ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /etc/openldap/ldif-imports/*.ldif import started"
-        for file in `ls /etc/openldap/ldif-imports/*.ldif`
-        do
-            slapadd_ldif_import "$file" "-n 2"
-            echo "====> $file imported."
-        done
-    fi
-    if [ -n "$(ls -A /var/openldap-data/ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /var/openldap-data/ldif-imports/*.ldif import started"
-        for file in `ls /var/openldap-data/ldif-imports/*.ldif`
-        do
-            slapadd_ldif_import "$file" "-n 2"
-            echo "====> $file imported."
-        done
-    fi
+    local location
+    for location in "/etc/openldap/ldif-imports/*.ldif" "/var/openldap-data/ldif-imports/*.ldif"; do
+        if [ -n "$(ls -A $location 2> /dev/null)" ]; then
+            echo "------- $location import started"
+            for file in `ls $location`
+            do
+                if ! grep -q "^changetype\s*:\s*modify$" $file; then
+                    echo "====> Slappadd $file imported(ldapadd)."
+                    slapadd_ldif_import "$file" "-n 2"
+                fi
+            done
+        fi
+    done 
 }
 
-function ldapadd_additional_ldifs(){
-    local binddn
+function ldap_additional_ldifs_import(){
+    local binddn location
     binddn="$1"
-    if [ -n "$(ls -A /etc/openldap/ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /etc/openldap/ldif-imports/*.ldif import started"
-        for file in `ls /etc/openldap/ldif-imports/*.ldif`
-        do
-            ldapadd_ldif_import "$file" "$binddn"
-            echo "====> $file imported."
-        done
-    fi
-    if [ -n "$(ls -A /var/openldap-data/ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /var/openldap-data/ldif-imports/*.ldif import started"
-        for file in `ls /var/openldap-data/ldif-imports/*.ldif`
-        do
-            ldapadd_ldif_import "$file" "$binddn"
-            echo "====> $file imported."
-        done
-    fi
+    for location in "/etc/openldap/ldif-imports/*.ldif" "/etc/openldap/ldif-imports/*.ldif"; do
+        if [ -n "$(ls -A $location 2> /dev/null)" ]; then
+            echo "------- $location import started"
+            for file in `ls $location`
+            do
+                if grep -q "^changetype\s*:\s*modify$" $file; then
+                    echo "====> Modify $file imported(ldapmodify)."
+                    ldapmodify_ldif_import "$file" "$binddn"
+                else
+                    echo "====> Add $file imported(ldapadd)."
+                    ldapadd_ldif_import "$file" "$binddn"
+                    #slapadd_ldif_import "$file" "-n 2"
+                fi
+            done
+        fi
+    done 
 }
-
-function ldapmodify_additional_ldifs(){
-    local binddn
-    binddn="$1"
-    if [ -n "$(ls -A /etc/openldap/modify-ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /etc/openldap/modify-ldif-imports/*.ldif import started"
-        for file in `ls /etc/openldap/modify-ldif-imports/*.ldif`
-        do
-            ldapmodify_ldif_import "$file" "$binddn"
-            echo "====> $file imported."
-        done
-    fi
-    if [ -n "$(ls -A /var/openldap-data/modify-ldif-imports/*.ldif 2> /dev/null)" ]; then
-        echo "------- /var/openldap-data/modify-ldif-imports/*.ldif import started"
-        for file in `ls /var/openldap-data/modify-ldif-imports/*.ldif`
-        do
-            ldapmodify_ldif_import "$file" "$binddn"
-            echo "====> $file imported."
-        done
-    fi
-}
-
 
 function echoDebug(){
     msg="$1"
@@ -262,21 +235,9 @@ function create_new_directory() {
 
     echo -n "  Creating LDAP directory..."
 
-    ldiffile=`mktemp -t slapadd.XXXXXX`
-    cat "/tmp/ldap-base" > ${ldiffile}
+    ldiffile=`mktemp -t ldapbase.XXXXXX`
 
-    # Change some defaults
-    sed -i -e "s|@SUFFIX@|$basedn|g" ${ldiffile}
-    sed -i -e "s|@SUFFIXDOMAIN@|$LDAP_DOMAIN|g" ${ldiffile}
-    sed -i -e "s|@PASSWORD@|$LDAP_ROOTPW|g" ${ldiffile}
-    sed -i -e "s|@DOMAINCOMPONENT@|$dc|g" ${ldiffile}
-    sed -i -e "s|@ORGANIZATION@|$LDAP_ORGANIZATION|g" ${ldiffile}
-    sed -i -e "s|@LDAPROOT@|$LDAP_ROOT|g" ${ldiffile}
-    sed -i -e "s|@ROOTDN@|$rootdn|g" ${ldiffile}
-    sed -i -e "s|@ROOTCONFIGDN@|$rootconfigdn|g" ${ldiffile}
-    sed -i -e "s|@REPLICATORPW@|$LDAP_REPLICATOR_PW|g" ${ldiffile}
-    sed -i -e "s|@MASTERPW@|$LDAP_MASTER_PW|g" ${ldiffile}
-    sed -i -e "s|@REPLICATION_PROVIDER_URL@|$REPLICATION_PROVIDER_URL|g" ${ldiffile}
+    parse_ldap_file "/tmp/ldap-base" $ldiffile
 
     /usr/sbin/slapadd -d $LAPDTOOLS_DEBUG_LEVEL -F "${SLAPD_CONF}" -b "${basedn}" -l "${ldiffile}"
 
@@ -319,8 +280,10 @@ function slapd_init_with_replication(){
 function slapd_init_as_master(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
-    ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
-    ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,cn=config"
+    #ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
+    #ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,cn=config"
+    slapadd_ldif_import "/tmp/ldap-init-replica-master" "-n 2"
+    slapadd_ldif_import "/tmp/ldap-init-replicator-base" "-n 2"
 }
 
 function slapd_init_as_slave(){
@@ -328,8 +291,9 @@ function slapd_init_as_slave(){
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
     ldapmodify_ldif_import "/tmp/ldap-init-replica-cunsumer" "cn=Manager,cn=config"
 }
-
-
+########################################
+## Main of script
+########################################
 firsttime=0
 if [ ! -e "${SLAPD_CONF}" ]; then
     printf "First time configuration with slappadd starting...\n";
@@ -338,10 +302,17 @@ if [ ! -e "${SLAPD_CONF}" ]; then
     prepare_slapd_conf
     create_ldap_directories
     slapd_init_with_replication
-    #slapd_init_ldif
     slapadd_additional_ldifs_level_0
     create_new_directory
     slapadd_additional_ldifs_level_2
+    if [ "$LDAP_IS_MASTER" == "true" ]; then
+        slapd_init_as_master
+    else 
+        if [ -n "$REPLICATION_PROVIDER_SERVER_NAME" ]; then
+            #slapd_init_as_slave
+            echo ""
+        fi
+    fi
 fi
 
 #exec /usr/sbin/slapd -F ${SLAPD_CONF} -h "ldap://localhost:389/ ldaps:///" -u ${SLAPD_USER} -g ${SLAPD_GROUP} -d 0 &
@@ -360,16 +331,17 @@ do
 done
 
 if [ $firsttime -eq 1 ]; then
-    ldapmodify_additional_ldifs "cn=Manager,cn=config"
-    ldapadd_additional_ldifs "cn=Manager,cn=config"
+    ldap_additional_ldifs_import "cn=Manager,cn=config"
     if [ "$LDAP_IS_MASTER" == "true" ]; then
-        slapd_init_as_master
+        #slapd_init_as_master
+        echo ""
     else 
         if [ -n "$REPLICATION_PROVIDER_SERVER_NAME" ]; then
             slapd_init_as_slave
         fi
     fi
 fi
+
 if [ "$LDAP_IS_MASTER" == "true" ]; then
      echo -e "\n\n\nLDAP Server is replication master:"
 else 
@@ -379,8 +351,9 @@ else
         echo -e "\n\n\nLDAP Server is with no replication:"
     fi
 fi
-echo "     LDAP_IS_MASTER is set to '$LDAP_IS_MASTER'"
-echo "     REPLICATION_PROVIDER_SERVER_NAME is set to '$REPLICATION_PROVIDER_SERVER_NAME'"
-echo -e "     REPLICATION_PROVIDER_URL is set to '$REPLICATION_PROVIDER_URL'\n\n"
+
+echo -e "\tLDAP_IS_MASTER is set to '$LDAP_IS_MASTER'"
+echo -e "\tREPLICATION_PROVIDER_SERVER_NAME is set to '$REPLICATION_PROVIDER_SERVER_NAME'"
+echo -e "\tREPLICATION_PROVIDER_URL is set to '$REPLICATION_PROVIDER_URL'\n\n"
 
 wait $child
