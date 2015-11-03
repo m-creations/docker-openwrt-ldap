@@ -280,10 +280,10 @@ function slapd_init_with_replication(){
 function slapd_init_as_master(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
-    #ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
-    #ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,cn=config"
-    slapadd_ldif_import "/tmp/ldap-init-replica-master" "-n 2"
-    slapadd_ldif_import "/tmp/ldap-init-replicator-base" "-n 2"
+    ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
+    ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,$basedn"
+    #slapadd_ldif_import "/tmp/ldap-init-replica-master" "-n 2"
+    #slapadd_ldif_import "/tmp/ldap-init-replicator-base" "-n 2"
 }
 
 function slapd_init_as_slave(){
@@ -333,7 +333,7 @@ done
 if [ $firsttime -eq 1 ]; then
     ldap_additional_ldifs_import "cn=Manager,cn=config"
     if [ "$LDAP_IS_MASTER" == "true" ]; then
-        #slapd_init_as_master
+        slapd_init_as_master
         echo ""
     else 
         if [ -n "$REPLICATION_PROVIDER_SERVER_NAME" ]; then
