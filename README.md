@@ -1,9 +1,9 @@
 docker-openwrt-ldap
 ===================
 
-A docker image for openldap based on OpenWrt x86_64 which writes data to
-
-* `/var/openldap-data`
+A docker image for openldap based on OpenWrt x86_64 which writes data
+to a persistent [Docker data volume](https://docs.docker.com/engine/userguide/dockervolumes/#data-volumes)
+at `/data`.
 
 How to use
 ----------
@@ -16,41 +16,39 @@ Give it two env vars:
 and a volume to store the data:
 
 ```
-docker run -e LDAP_DOMAIN=example.com \
-           -e LDAP_ROOTPW=secret \
-	   -v /share/ldap/example.com:/var/openldap-data \
-	   mcreations/openwrt-ldap
+docker run -e LDAP_DOMAIN=example.com -e LDAP_ROOTPW=secret mcreations/openwrt-ldap
 ```
 
-How to import ldfis
--------------------
-First of all after importing the base of ldap the system check ldif files in the following folder to import at database level 0:
+How to import LDIF files
+------------------------
+
+After importing the base ldap files, during startup, the startup
+script checks for LDIF files in the following folder to import them at
+database level 0:
+
 ```
 /etc/openldap/schema-ldif-includes/*.ldif
-```
-Then will check following directory for more ldifs:
-```
+
 /var/openldap-data/schema-ldif-includes/*.ldif
 ```
-You should sort file names for importing by order in each folders.
 
-Second the system check ldif files in the following folder to import at database level 2:
+Then the system checks for ldif files in the following folders to
+import at database level 2:
+
 ```
 /etc/openldap/ldif-imports/*.ldif
-```
-Then will check following directory for more ldifs:
-```
+
 /var/openldap-data/ldif-imports/*.ldif
 ```
-You should sort file names for importing by order in each folders.
 
+The file names in each folder are sorted alphabetically before import.
 
-Github Repo
------------
-https://github.com/m-creations/docker-openwrt-ldap
+Debugging
+---------
 
-LAPDTOOLS_DEBUG_LEVEL
-----------------------
+Set the env var `LAPDTOOLS_DEBUG_LEVEL` to a numeric value
+corresponding to the bitwise `OR` of multiple of these flags:
+
 ```
 Level   Keyword         Description
 ------  --------------  -------------------------------------------------------
@@ -72,11 +70,17 @@ Level   Keyword         Description
 32768   (0x8000 none)   only messages that get logged whatever log level is set
 ```
 
-
-REPLICATION
+Replication
 -----------
-`LDAP_IS_MASTER` default is false but for a master should be true
 
-`--link ldap-master:replication-provider-server`
-`REPLICATION_PROVIDER_URL` defaut value is ldaps://replication-provider-server:389
+To configure replication, use the following settings:
 
+- start the master with `-e LDAP_IS_MASTER=true` (default is `false`)
+
+- start the slave with `-e REPLICATION_PROVIDER_URL=ldap://rep-provider:389` (defaut value is `ldaps://replication-provider:389`)
+
+- start the slave with `--link ldap-master:replication-provider`
+
+Github Repo
+-----------
+https://github.com/m-creations/docker-openwrt-ldap
