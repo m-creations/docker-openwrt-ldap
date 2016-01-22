@@ -16,14 +16,14 @@ olcReadOnly: FALSE
 olcSyncUseSubentry: FALSE
 olcDbNoSync: TRUE
 olcAccess: {0}to *
-  by dn.exact="cn=Manager,cn=config" read
-  by dn.exact="cn=Manager,@SUFFIX@" read
-  by dn.exact="cn=Replicator,@SUFFIX@" read
+  by dn.exact="cn=@LDAPROOT@,cn=config" read
+  by dn.exact="cn=@LDAPROOT@,@SUFFIX@" read
+  by dn.exact="cn=replicator,@SUFFIX@" read
   by * none
-olcLimits: {0}dn.exact="cn=Manager,@SUFFIX@"
+olcLimits: {0}dn.exact="cn=@LDAPROOT@,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
-olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"
+olcLimits: {1}dn.exact="cn=replicator,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 

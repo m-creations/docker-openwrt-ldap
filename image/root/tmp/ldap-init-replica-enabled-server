@@ -46,7 +46,7 @@ olcTimelimit: time.soft=300 time.hard=3600
 dn: olcDatabase={0}config,cn=config
 objectClass: olcDatabaseConfig
 olcDatabase: {0}config
-olcRootDN: cn=Manager,cn=config
+olcRootDN: cn=@LDAPROOT@,cn=config
 olcRootPW: @PASSWORD@
 olcMonitoring: FALSE
 olcAccess: {0}to dn.subtree="cn=schema,cn=config"
@@ -63,8 +63,8 @@ olcReadOnly: FALSE
 olcSyncUseSubentry: FALSE
 olcMonitoring: FALSE
 olcAccess: {3}to dn.subtree="cn=monitor"
-  by dn.exact="cn=Manager,cn=config" read
-  by dn.exact="cn=Manager,@SUFFIX@" read
+  by dn.exact="cn=@LDAPROOT@,cn=config" read
+  by dn.exact="cn=@LDAPROOT@,@SUFFIX@" read
   by * none
 
 dn: olcDatabase={2}mdb,cn=config
@@ -73,7 +73,7 @@ objectClass: olcMdbConfig
 olcDatabase: {2}mdb
 olcMonitoring: TRUE
 olcSuffix: @SUFFIX@
-olcRootDN: cn=Manager,@SUFFIX@
+olcRootDN: cn=@LDAPROOT@,@SUFFIX@
 olcRootPW: @PASSWORD@
 olcDbDirectory: /var/openldap-data/@SUFFIXDOMAIN@
 olcDbMaxSize: 42949672960
@@ -93,16 +93,16 @@ olcDbIndex: nisMapEntry pres,eq
 olcDbIndex: entryCSN eq
 olcDbIndex: entryUUID eq
 olcAccess: {0}to attrs=userPassword
-  by dn.exact="cn=Manager,@SUFFIX@" write
-  by dn.exact="cn=Replicator,@SUFFIX@" read
+  by dn.exact="cn=@LDAPROOT@,@SUFFIX@" write
+  by dn.exact="cn=replicator,@SUFFIX@" read
   by self =xw
   by anonymous auth
   by * none
 olcAccess: {2}to * by * read
-olcLimits: {0}dn.exact="cn=Manager,@SUFFIX@"
+olcLimits: {0}dn.exact="cn=@LDAPROOT@,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
-olcLimits: {1}dn.exact="cn=Replicator,@SUFFIX@"
+olcLimits: {1}dn.exact="cn=replicator,@SUFFIX@"
   size.soft=unlimited size.hard=unlimited
   time.soft=unlimited time.hard=unlimited
 

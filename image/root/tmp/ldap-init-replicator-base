@@ -26,8 +26,8 @@ pwdMustChange: FALSE
 pwdAllowUserChange: TRUE
 pwdSafeModify: FALSE
 
-dn: cn=Replicator,@SUFFIX@
-cn: Replicator
+dn: cn=replicator,@SUFFIX@
+cn: replicator
 sn: LDAP Replication User
 objectClass: person
 objectClass: top

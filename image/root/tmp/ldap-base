@@ -12,7 +12,7 @@ cn: @LDAPROOT@
 description: LDAP Administrator
 userPassword: @PASSWORD@
 
-dn: cn=Manager,@SUFFIX@
-cn: Manager
+dn: cn=@LDAPROOT@,@SUFFIX@
+cn: @LDAPROOT@
 objectClass: top
 objectClass: organizationalrole

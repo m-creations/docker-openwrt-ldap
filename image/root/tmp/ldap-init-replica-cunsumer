@@ -9,7 +9,7 @@ olcSyncrepl: rid=0
   scope=sub
   schemachecking=on
   bindmethod=simple
-  binddn="cn=Replicator,@SUFFIX@"
+  binddn="cn=replicator,@SUFFIX@"
   credentials=@REPLICATORPW@
   logbase="cn=accesslog"
   logfilter="(objectClass=*)"
